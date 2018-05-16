@@ -55,18 +55,24 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Колбэк драга
+		 */
 		dragMoveListener(event) {
-			let target = event.target,
-				x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-				y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+			const target = event.target;
+			let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+			let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
 			this.setElPosition(target, x, y);
 		},
 
+		/**
+		 * Колбэк ресайза
+		 */
 		resizeListener(event)  {
-			let target = event.target,
-				x = (parseFloat(target.getAttribute('data-x')) || 0),
-				y = (parseFloat(target.getAttribute('data-y')) || 0);
+			const target = event.target;
+			let x = (parseFloat(target.getAttribute('data-x')) || 0);
+			let y = (parseFloat(target.getAttribute('data-y')) || 0);
 
 			target.style.width  = `${event.rect.width}px`;
 			target.style.height = `${event.rect.height}px`;
@@ -77,21 +83,14 @@ export default {
 			this.setElPosition(target, x, y);
 		},
 
+		/**
+		 * Колбэк после ресайза
+		 * p.s. отрабатывает только после ресайза с preserveAspectRatio=true
+		 */
 		resizeEndListener(event) {
 			if (event.interactable.options.resize.preserveAspectRatio) {
 				const target = event.target;
-				const parent = target.parentNode;
-				const parentPos = parent.getBoundingClientRect();
-				const childrenPos = target.getBoundingClientRect();
-				const img = target.querySelector('img');
-				const aspectRatio = img.clientWidth / img.clientHeight;
-
-				let relativePos = {
-					top: childrenPos.top - parentPos.top,
-					right: childrenPos.right - parentPos.right,
-					bottom: childrenPos.bottom - parentPos.bottom,
-					left: childrenPos.left - parentPos.left
-				};
+				const { relativePos, aspectRatio, parent } = this.getBlockData(target);
 
 				if (relativePos.top < 0) {
 					this.setElPosition(target, relativePos.left, 0);
@@ -106,11 +105,44 @@ export default {
 			}
 		},
 
+		/**
+		 * Установка позиции элемента
+		 * @param target Element
+		 * @param x Number
+		 * @param y Number
+		 */
 		setElPosition(target, x, y) {
 			target.style.webkitTransform = target.style.transform = `translate(${x}px, ${y}px)`;
 
 			target.setAttribute('data-x', x);
 			target.setAttribute('data-y', y);
+		},
+
+		/**
+		 * Получение необходимых данных о блоке
+		 * @return relativePos Object - позиция блока относительно родителя
+		 * @return aspectRatio Number - соотношение сторон изображения
+		 * @return parent Element - parentNode
+		 */
+		getBlockData(target) {
+			const parent = target.parentNode;
+			const parentPos = parent.getBoundingClientRect();
+			const childrenPos = target.getBoundingClientRect();
+			const img = target.querySelector('img');
+			const aspectRatio = img.clientWidth / img.clientHeight;
+
+			let relativePos = {
+				top: childrenPos.top - parentPos.top,
+				right: childrenPos.right - parentPos.right,
+				bottom: childrenPos.bottom - parentPos.bottom,
+				left: childrenPos.left - parentPos.left
+			};
+
+			return {
+				relativePos,
+				aspectRatio,
+				parent
+			}
 		}
 	}
 }
